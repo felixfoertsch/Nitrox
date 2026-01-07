@@ -325,12 +325,15 @@ public partial class ServerEntry : ObservableObject
                 // Assist server with finding launcher location.
                 if (Directory.Exists(launcherPath))
                 {
-                    startInfo.EnvironmentVariables.Add(NitroxUser.LAUNCHER_PATH_ENV_KEY, launcherPath);
+                    startInfo.EnvironmentVariables[NitroxUser.LAUNCHER_PATH_ENV_KEY] = launcherPath;
                 }
                 if (isEmbeddedMode)
                 {
                     startInfo.ArgumentList.Add("--embedded");
+                    startInfo.ArgumentList.Add("true");
                 }
+                startInfo.ArgumentList.Add("--data-path");
+                startInfo.ArgumentList.Add(Directory.GetParent(saveDir)?.Parent?.FullName ?? throw new DirectoryNotFoundException("Save data directory not found"));
                 Log.Info($"Starting server:{Environment.NewLine}File: {startInfo.FileName}{Environment.NewLine}Working directory: {startInfo.WorkingDirectory}{Environment.NewLine}Arguments: {string.Join(", ", startInfo.ArgumentList)}");
 
                 serverProcess = System.Diagnostics.Process.Start(startInfo);

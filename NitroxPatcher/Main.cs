@@ -25,13 +25,17 @@ public static class Main
         string envPath = Environment.GetEnvironmentVariable(NitroxUser.LAUNCHER_PATH_ENV_KEY, EnvironmentVariableTarget.Process);
         if (!string.IsNullOrEmpty(envPath))
         {
-            return envPath;
+            return ToGamePath(envPath);
         }
 
         // Get path from command args.
         string[] args = Environment.GetCommandLineArgs();
         for (int i = 0; i < args.Length - 1; i++)
         {
+            if (args[i] == "--nitrox")
+            {
+                args[i + 1] = ToGamePath(args[i + 1]);
+            }
             string path = (args[i], args[i + 1]) switch
             {
                 ("--nitrox", { } value) when Directory.Exists(value) => Path.GetFullPath(value),
@@ -46,6 +50,11 @@ public static class Main
 
         return string.Empty;
     });
+
+    // Steam forwards native Linux paths into Proton's Windows runtime.
+    private static string ToGamePath(string path) => Path.DirectorySeparatorChar == '\\' && path.StartsWith("/", StringComparison.Ordinal)
+        ? "Z:" + path.Replace('/', '\\')
+        : path;
 
     private static readonly char[] newLineChars = Environment.NewLine.ToCharArray();
     private static bool initialized;
