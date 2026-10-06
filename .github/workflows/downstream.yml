@@ -1,0 +1,35 @@
+name: Patched Nitrox
+
+on:
+  push:
+    branches: [main, automation]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: downstream
+  cancel-in-progress: false
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  sync:
+    if: github.repository == 'felixfoertsch/Nitrox'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: automation
+          fetch-depth: 0
+          token: ${{ secrets.CUSTOM_RELEASE_PUSH_TOKEN || github.token }}
+      - name: Test patch replay and ancestry
+        run: python3 .downstream/test-sync.py
+      - name: Update upstream mirror and patched main
+        run: python3 .downstream/sync-upstream.py
+        env:
+          GH_TOKEN: ${{ secrets.CUSTOM_RELEASE_PUSH_TOKEN }}
