@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory() as tmp:
 		'EnvironmentVariables[NitroxUser.LAUNCHER_PATH_ENV_KEY] = launcherPath;')
 	assert (work / 'README.md').read_text() == (TOOLING / 'README-prefix.md').read_text() + '# Official Nitrox\n'
 	assert not (work / '.github/workflows/upstream.yml').exists()
-	assert (work / '.github/workflows/downstream.yml').exists()
+	assert not (work / '.github/workflows').exists()
 	# Exact upstream adoption is accepted; arbitrary conflicts still fail.
 	source.write_text((work / source.relative_to(upstream)).read_text())
 	sync.git('add', '.', cwd=upstream)

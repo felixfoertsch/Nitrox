@@ -31,9 +31,6 @@ def reconstruct(upstream, tooling, destination):
 	# Keep inherited workflows out of generated main, without changing upstream.
 	git('rm', '-r', '--ignore-unmatch', '.github/workflows', cwd=destination)
 	shutil.copytree(tooling, destination / '.downstream')
-	workflow = destination / '.github/workflows/downstream.yml'
-	workflow.parent.mkdir(parents=True, exist_ok=True)
-	shutil.copyfile(tooling.parent / '.github/workflows/downstream.yml', workflow)
 	git('add', '-A', cwd=destination)
 	git('-c', 'user.name=Nitrox Fork', '-c', 'user.email=actions@felixfoertsch.de',
 		'commit', '--quiet', '-m', 'Apply Nitrox fork patches [skip ci]', cwd=destination)
@@ -58,12 +55,12 @@ def main():
 		if git('ls-remote', remote, 'refs/heads/automation').split()[0] != automation:
 			raise SystemExit('Automation changed during patch replay')
 		git('remote', 'set-url', 'origin', remote, cwd=work)
-		# New clone does not inherit checkout's HTTP credentials. Workflow-bearing
-		# main needs a token with workflow-write permission; [skip ci] avoids loops.
+		# New clone does not inherit checkout's HTTP credentials. Generated main
+		# has no workflows, so the automatic job token can publish it.
 		if os.environ.get('GITHUB_ACTIONS') == 'true':
 			token = os.environ.get('GH_TOKEN')
 			if not token:
-				raise SystemExit('CUSTOM_RELEASE_PUSH_TOKEN with contents/workflow write permission is required')
+				raise SystemExit('GH_TOKEN is required in GitHub Actions')
 			auth = base64.b64encode(('x-access-token:' + token).encode()).decode()
 			print('::add-mask::' + auth, flush=True)
 			os.environ.update(GIT_CONFIG_COUNT='1',

@@ -2,7 +2,7 @@ name: Patched Nitrox
 
 on:
   push:
-    branches: [main, automation]
+    branches: [automation]
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
@@ -26,10 +26,9 @@ jobs:
         with:
           ref: automation
           fetch-depth: 0
-          token: ${{ secrets.CUSTOM_RELEASE_PUSH_TOKEN || github.token }}
       - name: Test patch replay and ancestry
         run: python3 .downstream/test-sync.py
       - name: Update patched main
         run: python3 .downstream/sync-upstream.py
         env:
-          GH_TOKEN: ${{ secrets.CUSTOM_RELEASE_PUSH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

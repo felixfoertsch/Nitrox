@@ -6,10 +6,9 @@ filename order. Keep README patch links in `README-prefix.md` in that order.
 The daily/manual GitHub workflow checks out `automation`, tests replay, then
 updates `main` using exact force-with-lease
 checks. Upstream source is always official `SubnauticaNitrox/Nitrox` `master`.
-Set repository secret `CUSTOM_RELEASE_PUSH_TOKEN` to a token with contents and
-workflow-write permission before running scheduled synchronization.
+GitHub supplies the short-lived `GITHUB_TOKEN`; no personal token is required.
 A conflicting push fails rather than overwriting concurrent changes. Patch
-conflicts stop publication. `main` remains the GitHub default branch.
+conflicts stop publication. `automation` is the GitHub default branch and owns all workflows.
 
 Offline check:
 
