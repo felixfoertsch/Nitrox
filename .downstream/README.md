@@ -4,7 +4,7 @@ Edit patches and tooling on `automation`, not generated `main`. Patches apply in
 filename order. Keep README patch links in `README-prefix.md` in that order.
 
 The daily/manual GitHub workflow checks out `automation`, tests replay, then
-atomically updates `main` and pristine `upstream` using exact force-with-lease
+updates `main` using exact force-with-lease
 checks. Upstream source is always official `SubnauticaNitrox/Nitrox` `master`.
 Set repository secret `CUSTOM_RELEASE_PUSH_TOKEN` to a token with contents and
 workflow-write permission before running scheduled synchronization.

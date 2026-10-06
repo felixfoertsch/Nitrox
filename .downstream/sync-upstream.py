@@ -54,7 +54,7 @@ def main():
 		raise SystemExit('HEAD must match published automation')
 	with tempfile.TemporaryDirectory() as tmp:
 		work = Path(tmp) / 'source'
-		base = reconstruct('https://github.com/SubnauticaNitrox/Nitrox.git', tooling, work)
+		reconstruct('https://github.com/SubnauticaNitrox/Nitrox.git', tooling, work)
 		if git('ls-remote', remote, 'refs/heads/automation').split()[0] != automation:
 			raise SystemExit('Automation changed during patch replay')
 		git('remote', 'set-url', 'origin', remote, cwd=work)
@@ -71,8 +71,7 @@ def main():
 				GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + auth)
 		git('push', '--atomic',
 			'--force-with-lease=refs/heads/main:' + refs.get('refs/heads/main', ''),
-			'--force-with-lease=refs/heads/upstream:' + refs.get('refs/heads/upstream', ''),
-			'origin', 'HEAD:refs/heads/main', base + ':refs/heads/upstream', cwd=work)
+			'origin', 'HEAD:refs/heads/main', cwd=work)
 
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ jobs:
           token: ${{ secrets.CUSTOM_RELEASE_PUSH_TOKEN || github.token }}
       - name: Test patch replay and ancestry
         run: python3 .downstream/test-sync.py
-      - name: Update upstream mirror and patched main
+      - name: Update patched main
         run: python3 .downstream/sync-upstream.py
         env:
           GH_TOKEN: ${{ secrets.CUSTOM_RELEASE_PUSH_TOKEN }}
