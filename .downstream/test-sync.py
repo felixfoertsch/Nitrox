@@ -38,6 +38,8 @@ with tempfile.TemporaryDirectory() as tmp:
 	assert (work / source.relative_to(upstream)).read_text() == before.replace(
 		'EnvironmentVariables.Add(NitroxUser.LAUNCHER_PATH_ENV_KEY, launcherPath);',
 		'EnvironmentVariables[NitroxUser.LAUNCHER_PATH_ENV_KEY] = launcherPath;')
+	assert (work / 'README.md').read_text().startswith('This fork follows upstream [Nitrox]')
+	assert (work / 'README.md').read_text().split('\n---\n\n', 1)[1] == '# Official Nitrox\n'
 	assert (work / 'README.md').read_text() == (TOOLING / 'README-prefix.md').read_text() + '# Official Nitrox\n'
 	assert not (work / '.github/workflows/upstream.yml').exists()
 	assert not (work / '.github/workflows').exists()
