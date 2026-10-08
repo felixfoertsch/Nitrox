@@ -91,6 +91,7 @@ refs = {'refs/tags/1.8.1.0-2026.10.08.1': 'a', 'refs/tags/1.8.1.0-2026.10.08.3':
 assert sync.stable_identity('1.8.1.0', refs, 'a', '2026.10.08') == '1.8.1.0-2026.10.08.1'
 assert sync.stable_identity('1.8.1.0', refs, 'c', '2026.10.08') == '1.8.1.0-2026.10.08.4'
 workflow = (TOOLING.parent / '.github/workflows/downstream.yml').read_text()
+assert 'uses: actions/checkout@v6' in workflow
 assert 'ref: ${{ github.sha }}' in workflow
 assert 'persist-credentials: false' in workflow
 assert "github.ref == 'refs/heads/patch-queue'" in workflow

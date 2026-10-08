@@ -22,7 +22,7 @@ jobs:
     if: github.repository == 'felixfoertsch/Nitrox' && github.ref == 'refs/heads/patch-queue'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
