@@ -1,12 +1,10 @@
-This fork follows upstream [Nitrox](https://github.com/SubnauticaNitrox/Nitrox) and applies patches below in order. `automation` owns patches and workflows; generated `main` contains upstream source plus these patches. Nightly deployment builds follow upstream default branch.
+This fork follows upstream [Nitrox](https://github.com/SubnauticaNitrox/Nitrox) plus complete ordered patch queue: [0001](https://github.com/felixfoertsch/Nitrox/blob/patch-queue/.downstream/patches/0001-inherited-launcher-path.patch). `patch-queue` owns patches and workflows; generated `main` follows upstream default branch plus that queue. CI validates stable upstream source plus the same queue and nightly source; builds happen at deployment, not in CI.
 
-# Patched Nitrox
+# Ordered patch queue
 
-Applied patches, oldest first:
+1. [0001 — Fix inherited launcher path for embedded servers](https://github.com/felixfoertsch/Nitrox/blob/patch-queue/.downstream/patches/0001-inherited-launcher-path.patch) — retained even when upstream absorbs it; exact reverse-apply proof required.
 
-1. [Fix inherited launcher path for embedded servers](https://github.com/felixfoertsch/Nitrox/blob/automation/.downstream/patches/0001-inherited-launcher-path.patch) — already included in current upstream; retained for older revisions.
-
-See [fork maintenance](https://github.com/felixfoertsch/Nitrox/blob/automation/.downstream/README.md).
+See [fork maintenance](https://github.com/felixfoertsch/Nitrox/blob/patch-queue/.downstream/README.md).
 
 ---
 

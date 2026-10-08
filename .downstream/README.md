@@ -1,14 +1,22 @@
 # Fork maintenance
 
-Edit patches and tooling on `automation`, not generated `main`. Patches apply in
-filename order. Keep README patch links in `README-prefix.md` in that order.
+Edit full ordered queue and tooling on default `patch-queue`, never generated
+`main`. Keep individual numbered patch links in `README-prefix.md` in queue order.
 
-The daily/manual GitHub workflow checks out `automation`, tests replay, then
-updates `main` using exact force-with-lease
-checks. Upstream source is always official `SubnauticaNitrox/Nitrox` `master`.
-GitHub supplies the short-lived `GITHUB_TOKEN`; no personal token is required.
-A conflicting push fails rather than overwriting concurrent changes. Patch
-conflicts stop publication. `automation` is the GitHub default branch and owns all workflows.
+Daily/manual GitHub workflow uses built-in job token. It validates latest numeric
+four-component stable tag and upstream default-branch source with identical queue.
+Stable source ships through GitHub Releases' native downloadable source archives;
+only nightly source advances `main`. No binaries or deployment happen in CI.
+Existing upstream/fork tags stay intact. Stable identities use
+`<upstream-tag>-YYYY.MM.DD.N`, Europe/Berlin date and next unused suffix. Unchanged
+source reuses existing release identity; tags never move. Nightly source stays
+visibly separate on `main`.
+
+Exact reverse-apply proof permits absorbed patches, without removing them from
+queue. Conflicts stop publication. Upstream selection and fork heads are checked
+again before publishing; exact main force-with-lease rejects concurrent updates.
+Generated main omits all workflows and control tooling, preserving upstream README
+bytes after fork prefix. Builds and game-dependent tests belong to deployment.
 
 Offline check:
 
@@ -16,13 +24,8 @@ Offline check:
 python3 .downstream/test-sync.py
 ```
 
-Manual synchronization from a clean, published `automation` checkout:
+Manual synchronization from clean, published `patch-queue` checkout:
 
 ```fish
 python3 .downstream/sync-upstream.py
 ```
-
-The launcher patch replaces an inherited launcher-path environment value rather
-than attempting to add a duplicate key. No build or release publishing is added;
-upstream releases remain unchanged. Game-dependent builds/tests require the
-upstream development setup.

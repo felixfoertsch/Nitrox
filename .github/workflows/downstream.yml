@@ -2,7 +2,7 @@ name: Patched Nitrox
 
 on:
   push:
-    branches: [automation]
+    branches: [patch-queue]
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
@@ -19,13 +19,14 @@ env:
 
 jobs:
   sync:
-    if: github.repository == 'felixfoertsch/Nitrox'
+    if: github.repository == 'felixfoertsch/Nitrox' && github.ref == 'refs/heads/patch-queue'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: automation
+          ref: ${{ github.sha }}
           fetch-depth: 0
+          persist-credentials: false
       - name: Test patch replay and ancestry
         run: python3 .downstream/test-sync.py
       - name: Update patched main
