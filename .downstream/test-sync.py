@@ -26,6 +26,9 @@ with tempfile.TemporaryDirectory() as tmp:
                 {
 '''
 	source.write_text(before)
+	patcher = upstream / 'NitroxPatcher/Main.cs'
+	patcher.parent.mkdir(parents=True)
+	patcher.write_bytes((TOOLING / 'patcher-fixture.cs').read_bytes())
 	(upstream / 'README.md').write_text('# Official Nitrox\n')
 	workflow = upstream / '.github/workflows/upstream.yml'
 	workflow.parent.mkdir(parents=True)
