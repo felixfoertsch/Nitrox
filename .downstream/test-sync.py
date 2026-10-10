@@ -17,13 +17,17 @@ with tempfile.TemporaryDirectory() as tmp:
 	sync.git('init', '--quiet', '-b', 'master', str(upstream))
 	source = upstream / 'Nitrox.Launcher/Models/Design/ServerEntry.cs'
 	source.parent.mkdir(parents=True)
-	before = '''                // Assist server with finding launcher location.
+	before = '''                };
+                // Assist server with finding launcher location.
                 if (Directory.Exists(launcherPath))
                 {
                     startInfo.EnvironmentVariables.Add(NitroxUser.LAUNCHER_PATH_ENV_KEY, launcherPath);
                 }
                 if (isEmbeddedMode)
                 {
+                    startInfo.ArgumentList.Add("--embedded");
+                }
+                Log.Info($"Starting server:{Environment.NewLine}File: {startInfo.FileName}{Environment.NewLine}Working directory: {startInfo.WorkingDirectory}{Environment.NewLine}Arguments: {string.Join(", ", startInfo.ArgumentList)}");
 '''
 	source.write_text(before)
 	patcher = upstream / 'NitroxPatcher/Main.cs'
@@ -40,9 +44,14 @@ with tempfile.TemporaryDirectory() as tmp:
 	work = root / 'patched'
 	assert sync.reconstruct(str(upstream), TOOLING, work) == base
 	assert sync.git('rev-parse', 'HEAD^', cwd=work) == base
+	assert 'startInfo.ArgumentList.Add("--data-path");' in (work / source.relative_to(upstream)).read_text()
 	assert (work / source.relative_to(upstream)).read_text() == before.replace(
 		'EnvironmentVariables.Add(NitroxUser.LAUNCHER_PATH_ENV_KEY, launcherPath);',
-		'EnvironmentVariables[NitroxUser.LAUNCHER_PATH_ENV_KEY] = launcherPath;')
+		'EnvironmentVariables[NitroxUser.LAUNCHER_PATH_ENV_KEY] = launcherPath;').replace(
+		'                Log.Info(',
+		'                startInfo.ArgumentList.Add("--data-path");\n'
+		'                startInfo.ArgumentList.Add(Directory.GetParent(saveDir)?.Parent?.FullName ?? throw new DirectoryNotFoundException("Save data directory not found"));\n'
+		'                Log.Info(')
 	assert (work / 'README.md').read_text().startswith('This fork follows upstream [Nitrox]')
 	assert not (work / '.downstream').exists()
 	repeat = root / 'repeat'
