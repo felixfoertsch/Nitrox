@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-"""Validate stable and nightly source; publish only nightly to generated main."""
+"""Replay patches on upstream development; publish immutable dated source releases."""
 import base64
+import hashlib
+import json
+import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
@@ -17,22 +21,10 @@ def git(*args, cwd=None):
 
 
 def selection(upstream):
-	lines = git('ls-remote', '--symref', upstream, 'HEAD', 'refs/tags/*').splitlines()
+	lines = git('ls-remote', '--symref', upstream, 'HEAD').splitlines()
 	branch = next(line.split()[1] for line in lines if line.startswith('ref:'))
 	nightly = next(line.split()[0] for line in lines if line.endswith('\tHEAD') and not line.startswith('ref:'))
-	tags = {}
-	peeled = {}
-	for line in lines:
-		sha, ref = line.split()[:2]
-		name = ref.removeprefix('refs/tags/')
-		if name.endswith('^{}'):
-			peeled[name[:-3]] = sha
-		if re.fullmatch(r'v?\d+(?:\.\d+){3}', name):
-			tags[name] = sha
-	if not tags:
-		raise SystemExit('No numeric stable upstream tag')
-	tag = max(tags, key=lambda name: tuple(map(int, name.lstrip('v').split('.'))))
-	return branch, nightly, tag, peeled.get(tag, tags[tag])
+	return branch, nightly
 
 
 def reconstruct(upstream, tooling, destination, revision=None):
@@ -74,27 +66,31 @@ def check_fresh(upstream, selected, remote, queue, main):
 		raise SystemExit('Fork changed during patch replay')
 
 
-def stable_identity(upstream_tag, refs, source, day):
-	prefix = upstream_tag + '-' + day + '.'
-	matches = [(int(ref[len('refs/tags/' + prefix):]), sha)
+def source_identity(version, refs, source, day):
+	prefix = version + '-' + day
+	matches = [(0 if ref == 'refs/tags/' + prefix else int(ref[len('refs/tags/' + prefix + '.'):]), sha)
 		for ref, sha in refs.items()
-		if ref.startswith('refs/tags/' + prefix) and ref[len('refs/tags/' + prefix):].isdigit()]
+		if ref == 'refs/tags/' + prefix or re.fullmatch(re.escape('refs/tags/' + prefix) + r'\.\d+', ref)]
 	for number, sha in sorted(matches):
 		if sha == source:
-			return prefix + str(number)
-	return prefix + str(max((number for number, _ in matches), default=0) + 1)
+			return prefix + ('.' + str(number) if number else '')
+	number = max((number for number, _ in matches), default=-1) + 1
+	return prefix + ('.' + str(number) if number else '')
 
 
-def publish_stable(work, selected, remote, queue, main):
+def publish_source(work, selected, remote, queue, main):
 	refs = dict((ref, sha) for sha, ref in
 		(line.split() for line in git('ls-remote', '--tags', remote).splitlines()))
 	source = git('rev-parse', 'HEAD', cwd=work)
+	version = ET.parse(work / 'Directory.Build.props').findtext('.//{*}Version')
+	if not version or not re.fullmatch(r'\d+(?:\.\d+){3}', version):
+		raise SystemExit('Invalid upstream version')
 	# Reuse existing source identity across days; retry missing release, never retag.
 	tag = next((ref.removeprefix('refs/tags/') for ref, sha in refs.items()
-		if sha == source and re.fullmatch(re.escape('refs/tags/' + selected[2]) +
-			r'-\d{4}\.\d{2}\.\d{2}\.\d+', ref)), None)
+		if sha == source and re.fullmatch(re.escape('refs/tags/' + version) +
+			r'-\d{4}\.\d{2}\.\d{2}(?:\.\d+)?', ref)), None)
 	if tag is None:
-		tag = stable_identity(selected[2], refs, source,
+		tag = source_identity(version, refs, source,
 			datetime.now(ZoneInfo('Europe/Berlin')).strftime('%Y.%m.%d'))
 		check_fresh(UPSTREAM, selected, remote, queue, main)
 		git('-c', 'tag.gpgsign=false', 'tag', tag, cwd=work)
@@ -104,12 +100,16 @@ def publish_stable(work, selected, remote, queue, main):
 		'repos/felixfoertsch/Nitrox/releases', '--jq', '.[].tag_name'], text=True).splitlines()
 	if tag not in releases:
 		check_fresh(UPSTREAM, selected, remote, queue, main)
-		# Native GitHub source archives follow immutable source tag; no binary assets.
-		subprocess.run(['gh', 'release', 'create', tag, '--repo', 'felixfoertsch/Nitrox',
-			'--verify-tag', '--latest', '--title', 'Stable source ' + tag,
+		url = 'https://api.github.com/repos/felixfoertsch/Nitrox/tarball/' + source
+		with urllib.request.urlopen(url, timeout=60) as response:
+			checksum = hashlib.sha256(response.read()).hexdigest()
+		manifest = work.parent / 'source.json'
+		manifest.write_text(json.dumps({'version': tag, 'source': source, 'sha256': checksum}))
+		subprocess.run(['gh', 'release', 'create', tag, str(manifest), '--repo', 'felixfoertsch/Nitrox',
+			'--verify-tag', '--latest', '--title', 'Development source ' + tag,
 			'--notes', 'Source-only release. Builds happen at deployment.\n\nUpstream: ' +
-			selected[3] + '\nPatched source: ' + source + '\nPatch queue: ' + queue], check=True)
-	print('Stable source: ' + source + ' https://github.com/felixfoertsch/Nitrox/releases/tag/' + tag)
+			selected[1] + '\nPatched source: ' + source + '\nPatch queue: ' + queue], check=True)
+	print('Development source: ' + source + ' https://github.com/felixfoertsch/Nitrox/releases/tag/' + tag)
 
 
 def main():
@@ -125,8 +125,6 @@ def main():
 	selected = selection(UPSTREAM)
 	with tempfile.TemporaryDirectory() as tmp:
 		root = Path(tmp)
-		stable = root / 'stable'
-		reconstruct(UPSTREAM, tooling, stable, selected[3])
 		work = root / 'nightly'
 		reconstruct(UPSTREAM, tooling, work, selected[1])
 		check_fresh(UPSTREAM, selected, remote, queue, refs.get('refs/heads/main', ''))
@@ -140,7 +138,7 @@ def main():
 			os.environ.update(GIT_CONFIG_COUNT='1',
 				GIT_CONFIG_KEY_0='http.https://github.com/.extraheader',
 				GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + auth)
-		publish_stable(stable, selected, remote, queue, refs.get('refs/heads/main', ''))
+		publish_source(work, selected, remote, queue, refs.get('refs/heads/main', ''))
 		check_fresh(UPSTREAM, selected, remote, queue, refs.get('refs/heads/main', ''))
 		git('push', '--atomic',
 			'--force-with-lease=refs/heads/main:' + refs.get('refs/heads/main', ''),

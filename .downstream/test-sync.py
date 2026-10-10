@@ -64,7 +64,7 @@ with tempfile.TemporaryDirectory() as tmp:
 	sync.git('tag', '1.8.1.0', cwd=upstream)
 	sync.git('tag', '99.0.0.0-beta', cwd=upstream)
 	selected = sync.selection(str(upstream))
-	assert selected == ('refs/heads/master', base, '1.8.1.0', base)
+	assert selected == ('refs/heads/master', base)
 	sync.git('branch', 'patch-queue', cwd=upstream)
 	sync.git('branch', 'main', cwd=upstream)
 	sync.check_fresh(str(upstream), selected, str(upstream), base, base)
@@ -101,10 +101,10 @@ with tempfile.TemporaryDirectory() as tmp:
 		raise AssertionError('Conflict accepted')
 	except sync.subprocess.CalledProcessError:
 		pass
-assert sync.stable_identity('1.8.1.0', {}, 'a', '2026.10.08') == '1.8.1.0-2026.10.08.1'
-refs = {'refs/tags/1.8.1.0-2026.10.08.1': 'a', 'refs/tags/1.8.1.0-2026.10.08.3': 'b'}
-assert sync.stable_identity('1.8.1.0', refs, 'a', '2026.10.08') == '1.8.1.0-2026.10.08.1'
-assert sync.stable_identity('1.8.1.0', refs, 'c', '2026.10.08') == '1.8.1.0-2026.10.08.4'
+assert sync.source_identity('1.9.0.0', {}, 'a', '2026.10.10') == '1.9.0.0-2026.10.10'
+refs = {'refs/tags/1.9.0.0-2026.10.10': 'a', 'refs/tags/1.9.0.0-2026.10.10.3': 'b'}
+assert sync.source_identity('1.9.0.0', refs, 'a', '2026.10.10') == '1.9.0.0-2026.10.10'
+assert sync.source_identity('1.9.0.0', refs, 'c', '2026.10.10') == '1.9.0.0-2026.10.10.4'
 workflow = (TOOLING.parent / '.github/workflows/downstream.yml').read_text()
 assert 'uses: actions/checkout@v6' in workflow
 assert 'ref: ${{ github.sha }}' in workflow
