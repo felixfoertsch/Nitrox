@@ -105,7 +105,12 @@ assert sync.source_identity('1.9.0.0', {}, 'a', '2026.10.10') == '1.9.0.0-2026.1
 refs = {'refs/tags/1.9.0.0-2026.10.10': 'a', 'refs/tags/1.9.0.0-2026.10.10.3': 'b'}
 assert sync.source_identity('1.9.0.0', refs, 'a', '2026.10.10') == '1.9.0.0-2026.10.10'
 assert sync.source_identity('1.9.0.0', refs, 'c', '2026.10.10') == '1.9.0.0-2026.10.10.4'
+assert sync.upstream_unchanged('schedule', 'a', ('refs/heads/master', 'a'))
+assert not sync.upstream_unchanged('schedule', 'b', ('refs/heads/master', 'a'))
+assert not sync.upstream_unchanged('push', 'a', ('refs/heads/master', 'a'))
+assert not sync.upstream_unchanged('workflow_dispatch', 'a', ('refs/heads/master', 'a'))
 workflow = (TOOLING.parent / '.github/workflows/downstream.yml').read_text()
+assert "cron: '*/15 * * * *'" in workflow
 assert 'uses: actions/checkout@v6' in workflow
 assert 'ref: ${{ github.sha }}' in workflow
 assert 'persist-credentials: false' in workflow

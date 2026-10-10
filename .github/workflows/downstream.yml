@@ -4,7 +4,7 @@ on:
   push:
     branches: [patch-queue]
   schedule:
-    - cron: '17 4 * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 permissions:

@@ -3,7 +3,9 @@
 Edit full ordered queue and tooling on default `patch-queue`, never generated
 `main`. Keep individual numbered patch links in `README-prefix.md` in queue order.
 
-Daily/manual GitHub workflow uses built-in job token. It follows upstream default
+GitHub workflow polls every 15 minutes using built-in job token. Scheduled runs
+skip synchronization when generated `main` already has current upstream parent.
+Patch-queue pushes and manual runs always synchronize. It follows upstream default
 (development) branch only, replays queue, publishes source release and advances `main`.
 No binaries or deployment happen in CI. Existing upstream/fork tags stay intact.
 Identities use `<upstream-version>-YYYY.MM.DD`, Europe/Berlin date, with `.N` for

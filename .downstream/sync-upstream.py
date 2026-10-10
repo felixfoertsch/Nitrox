@@ -112,6 +112,10 @@ def publish_source(work, selected, remote, queue, main):
 	print('Development source: ' + source + ' https://github.com/felixfoertsch/Nitrox/releases/tag/' + tag)
 
 
+def upstream_unchanged(event, parent, selected):
+	return event == 'schedule' and parent == selected[1]
+
+
 def main():
 	if git('status', '--porcelain'):
 		raise SystemExit('Working tree must be clean')
@@ -123,6 +127,11 @@ def main():
 	if refs.get('refs/heads/patch-queue') != queue:
 		raise SystemExit('HEAD must match published patch-queue')
 	selected = selection(UPSTREAM)
+	if os.environ.get('GITHUB_EVENT_NAME') == 'schedule' and refs.get('refs/heads/main'):
+		git('fetch', '--quiet', remote, refs['refs/heads/main'])
+		if upstream_unchanged('schedule', git('rev-parse', refs['refs/heads/main'] + '^'), selected):
+			print('Upstream unchanged; synchronization skipped')
+			return
 	with tempfile.TemporaryDirectory() as tmp:
 		root = Path(tmp)
 		work = root / 'nightly'
