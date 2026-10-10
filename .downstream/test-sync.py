@@ -48,6 +48,9 @@ with tempfile.TemporaryDirectory() as tmp:
 	assert (work / source.relative_to(upstream)).read_text() == before.replace(
 		'EnvironmentVariables.Add(NitroxUser.LAUNCHER_PATH_ENV_KEY, launcherPath);',
 		'EnvironmentVariables[NitroxUser.LAUNCHER_PATH_ENV_KEY] = launcherPath;').replace(
+		'                    startInfo.ArgumentList.Add("--embedded");',
+		'                    startInfo.ArgumentList.Add("--embedded");\n'
+		'                    startInfo.ArgumentList.Add("true");').replace(
 		'                Log.Info(',
 		'                startInfo.ArgumentList.Add("--data-path");\n'
 		'                startInfo.ArgumentList.Add(Directory.GetParent(saveDir)?.Parent?.FullName ?? throw new DirectoryNotFoundException("Save data directory not found"));\n'

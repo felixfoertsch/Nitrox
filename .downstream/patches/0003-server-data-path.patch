@@ -1,8 +1,9 @@
 diff --git a/Nitrox.Launcher/Models/Design/ServerEntry.cs b/Nitrox.Launcher/Models/Design/ServerEntry.cs
 --- a/Nitrox.Launcher/Models/Design/ServerEntry.cs
 +++ b/Nitrox.Launcher/Models/Design/ServerEntry.cs
-@@ -332,3 +332,5 @@
+@@ -332,3 +332,6 @@
                      startInfo.ArgumentList.Add("--embedded");
++                    startInfo.ArgumentList.Add("true");
                  }
 +                startInfo.ArgumentList.Add("--data-path");
 +                startInfo.ArgumentList.Add(Directory.GetParent(saveDir)?.Parent?.FullName ?? throw new DirectoryNotFoundException("Save data directory not found"));
