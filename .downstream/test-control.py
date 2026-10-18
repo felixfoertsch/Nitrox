@@ -12,6 +12,8 @@ import subprocess
 import tempfile
 
 os.environ.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull)
+# Fixtures bind synthetic controls, never the enclosing workflow dispatch revision.
+os.environ.pop('EXPECTED_CONTROL', None)
 TOOLING = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('sync', TOOLING / 'sync-upstream.py')
 sync = importlib.util.module_from_spec(spec)
