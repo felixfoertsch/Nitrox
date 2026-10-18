@@ -3,9 +3,18 @@
 Edit full ordered queue and tooling on default `patch-queue`, never generated
 `main`. Keep individual numbered patch links in `README-prefix.md` in queue order.
 
-GitHub workflow polls every 15 minutes using built-in job token. Scheduled runs
-skip synchronization when generated `main` already has current upstream parent.
-Patch-queue pushes and manual runs always synchronize. It follows upstream default
+GitHub workflow polls every 15 minutes using built-in job token. Read-only checks
+first reconstruct full patched upstream plus explicitly owned control overlay.
+Unchanged intended trees with upstream ancestry are no-ops. Changed control requires
+a self-contained bundle restored into an empty repository, uploaded with SHA-256
+and 90-day requested retention, downloaded and restored again before promotion.
+Trusted old-control code independently reconstructs, checks complete workflow tree
+identity and fresh heads, then atomically creates immutable lightweight
+`archive/patch-queue/<old SHA>` and rewrites control using exact leases. No fallback.
+Archive tags are not release identities and must never be deleted or retagged.
+An exact-revision dispatch continues downstream work; old run exits without publishing.
+Dispatch failure fails run; next scheduled no-op resumes source publication.
+Patch-queue pushes and manual runs synchronize. It follows upstream default
 (development) branch only, replays queue, publishes source release and advances `main`.
 No binaries or deployment happen in CI. Existing upstream/fork tags stay intact.
 Identities use `<upstream-version>-YYYY.MM.DD`, Europe/Berlin date, with `.N` for
@@ -24,6 +33,7 @@ Offline check:
 
 ```fish
 python3 .downstream/test-sync.py
+python3 .downstream/test-control.py
 ```
 
 Manual synchronization from clean, published `patch-queue` checkout:

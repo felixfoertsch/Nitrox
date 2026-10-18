@@ -6,9 +6,18 @@ on:
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
+    inputs:
+      expected_control:
+        description: Exact control revision (empty for manual current revision)
+        type: string
+        default: ''
+      rebuild:
+        description: Explicit rebuild intent
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: downstream
@@ -16,11 +25,15 @@ concurrency:
 
 env:
   PYTHONDONTWRITEBYTECODE: '1'
+  EXPECTED_CONTROL: ${{ inputs.expected_control }}
+  REBUILD: ${{ inputs.rebuild || 'false' }}
 
 jobs:
-  sync:
+  check:
     if: github.repository == 'felixfoertsch/Nitrox' && github.ref == 'refs/heads/patch-queue'
     runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.refresh.outputs.changed }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -28,8 +41,46 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Test patch replay and ancestry
-        run: python3 .downstream/test-sync.py
+        run: |
+          python3 .downstream/test-sync.py
+          python3 .downstream/test-control.py
+      - name: Prepare control refresh without write credentials
+        id: refresh
+        run: |
+          mkdir -p "$RUNNER_TEMP/refresh"
+          python3 .downstream/sync-upstream.py prepare "$RUNNER_TEMP/refresh"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: control-refresh-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/refresh/refresh.json
+            ${{ runner.temp }}/refresh/control.bundle
+          retention-days: 90
+          if-no-files-found: error
+
+  publish:
+    needs: check
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: control-refresh-${{ github.run_id }}
+          path: ${{ runner.temp }}/refresh
+      - name: Verify backup, independently reconstruct, atomically refresh and dispatch
+        if: needs.check.outputs.changed == 'true'
+        run: python3 .downstream/sync-upstream.py promote "$RUNNER_TEMP/refresh"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Update patched main
+        if: needs.check.outputs.changed != 'true'
         run: python3 .downstream/sync-upstream.py
         env:
           GH_TOKEN: ${{ github.token }}
