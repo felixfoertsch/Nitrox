@@ -1,0 +1,24 @@
+diff --git a/NitroxPatcher/Main.cs b/NitroxPatcher/Main.cs
+index bcb88639..5481507f 100644
+--- a/NitroxPatcher/Main.cs
++++ b/NitroxPatcher/Main.cs
+@@ -27,3 +27,3 @@ public static class Main
+         {
+-            return envPath;
++            return ToGamePath(envPath);
+         }
+@@ -34,2 +34,6 @@ public static class Main
+         {
++            if (args[i] == "--nitrox")
++            {
++                args[i + 1] = ToGamePath(args[i + 1]);
++            }
+             string path = (args[i], args[i + 1]) switch
+@@ -49,2 +53,7 @@ public static class Main
+ 
++    // Steam forwards native Linux paths into Proton's Windows runtime.
++    private static string ToGamePath(string path) => Path.DirectorySeparatorChar == '\\' && path.StartsWith("/", StringComparison.Ordinal)
++        ? "Z:" + path.Replace('/', '\\')
++        : path;
++
+     private static readonly char[] newLineChars = Environment.NewLine.ToCharArray();
