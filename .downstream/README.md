@@ -1,0 +1,43 @@
+# Fork maintenance
+
+Edit full ordered queue and tooling on default `patch-queue`, never generated
+`main`. Keep individual numbered patch links in `README-prefix.md` in queue order.
+
+GitHub workflow polls every 15 minutes using built-in job token. Read-only checks
+first reconstruct full patched upstream plus explicitly owned control overlay.
+Unchanged intended trees with upstream ancestry are no-ops. Changed control requires
+a self-contained bundle restored into an empty repository, uploaded with SHA-256
+and 90-day requested retention, downloaded and restored again before promotion.
+Trusted old-control code independently reconstructs, checks complete workflow tree
+identity and fresh heads, then atomically creates immutable lightweight
+`archive/patch-queue/<old SHA>` and rewrites control using exact leases. No fallback.
+Archive tags are not release identities and must never be deleted or retagged.
+An exact-revision dispatch continues downstream work; old run exits without publishing.
+Dispatch failure fails run; next scheduled no-op resumes source publication.
+Patch-queue pushes and manual runs synchronize. It follows upstream default
+(development) branch only, replays queue, publishes source release and advances `main`.
+No binaries or deployment happen in CI. Existing upstream/fork tags stay intact.
+Identities use `<upstream-version>-YYYY.MM.DD`, Europe/Berlin date, with `.N` for
+same-day changes. Unchanged source reuses existing release identity; tags never move.
+Release asset `source.json` records version, immutable patched source SHA and SHA-256
+of GitHub source archive. `felix pv` resolves latest release and verifies archive
+before building locally. Failed synchronization leaves last published release usable.
+
+Exact reverse-apply proof permits absorbed patches, without removing them from
+queue. Conflicts stop publication. Upstream selection and fork heads are checked
+again before publishing; exact main force-with-lease rejects concurrent updates.
+Generated main omits all workflows and control tooling, preserving upstream README
+bytes after fork prefix. Builds and game-dependent tests belong to deployment.
+
+Offline check:
+
+```fish
+python3 .downstream/test-sync.py
+python3 .downstream/test-control.py
+```
+
+Manual synchronization from clean, published `patch-queue` checkout:
+
+```fish
+python3 .downstream/sync-upstream.py
+```
