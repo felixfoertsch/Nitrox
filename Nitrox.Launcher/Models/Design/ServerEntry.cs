@@ -445,7 +445,10 @@ internal sealed partial class ServerEntry : ObservableObject
                 if (isEmbeddedMode)
                 {
                     startInfo.ArgumentList.Add("--embedded");
+                    startInfo.ArgumentList.Add("true");
                 }
+                startInfo.ArgumentList.Add("--data-path");
+                startInfo.ArgumentList.Add(Directory.GetParent(saveDir)?.Parent?.FullName ?? throw new DirectoryNotFoundException("Save data directory not found"));
                 Log.Info($"Starting server:{Environment.NewLine}File: {startInfo.FileName}{Environment.NewLine}Working directory: {startInfo.WorkingDirectory}{Environment.NewLine}Arguments: {string.Join(", ", startInfo.ArgumentList)}");
 
                 serverProcess = ProcessEx.From(startInfo);
