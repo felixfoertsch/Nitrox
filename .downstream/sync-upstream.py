@@ -44,7 +44,8 @@ def selection(upstream):
 
 
 def reconstruct(upstream, tooling, destination, revision=None, control=False, default_ref=None):
-	git('clone', '--quiet', '--no-checkout', upstream, str(destination))
+	# Temporary reconstructions must not leave maintenance running after return.
+	git('clone', '--config', 'maintenance.auto=false', '--quiet', '--no-checkout', upstream, str(destination))
 	git('checkout', '--quiet', '--detach', revision or 'origin/HEAD', cwd=destination)
 	base = git('rev-parse', 'HEAD', cwd=destination)
 	if git('ls-tree', base, '--', '.downstream', '.github/workflows/downstream.yml', cwd=destination):
